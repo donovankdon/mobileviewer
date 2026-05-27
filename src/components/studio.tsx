@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { DEFAULT_DEVICE_IDS, DEVICES_BY_ID } from "@/lib/devices";
+import { AuditPanel } from "./audit-panel";
 import { DevicePicker } from "./device-picker";
 import { DevicePreview } from "./device-preview";
 import { UrlBar } from "./url-bar";
@@ -21,6 +22,7 @@ export function Studio() {
   }, [deviceParam]);
 
   const [density, setDensity] = useState<Density>("fit");
+  const [auditOpen, setAuditOpen] = useState(false);
 
   const updateQuery = useCallback(
     (patch: Record<string, string | null>) => {
@@ -60,8 +62,16 @@ export function Studio() {
         onSelected={setDevices}
         density={density}
         onDensity={setDensity}
+        auditOpen={auditOpen}
+        onToggleAudit={() => setAuditOpen((v) => !v)}
       />
       <Canvas devices={devices} url={url} scale={scale} />
+      <AuditPanel
+        open={auditOpen}
+        onClose={() => setAuditOpen(false)}
+        url={url}
+        deviceIds={selectedIds}
+      />
     </div>
   );
 }
@@ -73,6 +83,8 @@ function Sidebar({
   onSelected,
   density,
   onDensity,
+  auditOpen,
+  onToggleAudit,
 }: {
   url: string | null;
   onUrl: (u: string) => void;
@@ -80,6 +92,8 @@ function Sidebar({
   onSelected: (ids: string[]) => void;
   density: Density;
   onDensity: (d: Density) => void;
+  auditOpen: boolean;
+  onToggleAudit: () => void;
 }) {
   return (
     <aside className="flex h-full w-72 shrink-0 flex-col gap-5 border-r border-line bg-bg p-4">
@@ -111,6 +125,19 @@ function Sidebar({
           ))}
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={onToggleAudit}
+        disabled={!url}
+        className={`mono rounded border px-3 py-2 text-xs transition ${
+          auditOpen
+            ? "border-fg bg-fg text-bg"
+            : "border-fg-muted bg-bg-elevated text-fg hover:border-fg"
+        } disabled:opacity-40 disabled:hover:border-fg-muted`}
+      >
+        {auditOpen ? "✕ close audit" : "⚡ audit cross-device"}
+      </button>
 
       <footer className="mt-auto flex items-center justify-between border-t border-line pt-3">
         <CopyLinkButton disabled={!url} />
