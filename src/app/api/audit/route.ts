@@ -67,6 +67,28 @@ export async function POST(request: Request) {
 
   const client = new Anthropic();
 
+  // Fetch screenshots server-side and send as base64 — Anthropic respects
+  // robots.txt for URL-mode images, which trips on Microlink's CDN.
+  let screenshots: { device: (typeof devices)[number]; data: string; mediaType: string }[];
+  try {
+    screenshots = await Promise.all(
+      devices.map(async (d) => {
+        const shotUrl = microlinkScreenshotUrl(normalizedUrl, {
+          width: d.width,
+          height: d.height,
+        });
+        const r = await fetch(shotUrl, { signal: AbortSignal.timeout(30000) });
+        if (!r.ok) throw new Error(`Screenshot ${d.id} returned ${r.status}`);
+        const mediaType = r.headers.get("content-type") ?? "image/jpeg";
+        const buffer = Buffer.from(await r.arrayBuffer());
+        return { device: d, data: buffer.toString("base64"), mediaType };
+      }),
+    );
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Unknown screenshot error";
+    return Response.json({ error: `Screenshot capture failed: ${msg}` }, { status: 502 });
+  }
+
   const userContent: Anthropic.ContentBlockParam[] = [
     {
       type: "text",
@@ -74,11 +96,12 @@ export async function POST(request: Request) {
         .map((d, i) => `${i + 1}. ${d.id} — ${d.name} (${d.width}×${d.height}, ${d.category})`)
         .join("\n")}\n\nIssues you report must reference the device by its id (e.g. "${devices[0].id}").`,
     },
-    ...devices.map((d) => ({
+    ...screenshots.map((s) => ({
       type: "image" as const,
       source: {
-        type: "url" as const,
-        url: microlinkScreenshotUrl(normalizedUrl, { width: d.width, height: d.height }),
+        type: "base64" as const,
+        media_type: s.mediaType as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
+        data: s.data,
       },
     })),
   ];
