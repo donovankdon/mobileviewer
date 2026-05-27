@@ -52,7 +52,7 @@ const CHROME: Record<string, { x: number; y: number }> = {
   "iphone-classic": { x: 20, y: 100 },
   android: { x: 18, y: 18 },
   tablet: { x: 32, y: 32 },
-  desktop: { x: 4, y: 40 },
+  desktop: { x: 4, y: 32 },
 };
 
 function scaledOuterWidth(d: Device, scale: number) {
@@ -62,15 +62,19 @@ function scaledOuterHeight(d: Device, scale: number) {
   return (d.height + CHROME[d.frame].y) * scale;
 }
 
+// Shared chrome class — flat, minimal, no ring.
+const CHROME_BG = "bg-[#181818]";
+const SCREEN_BG = "bg-white";
+
 function IPhoneDynamicIslandFrame({ device, children }: { device: Device; children: ReactNode }) {
   return (
     <div
-      className="relative rounded-[56px] bg-neutral-900 p-3 shadow-xl ring-1 ring-black/30"
+      className={`relative rounded-[56px] ${CHROME_BG} p-3`}
       style={{ width: device.width + 24, height: device.height + 24 }}
     >
       <div className="absolute top-3.5 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black" style={{ width: 110, height: 32 }} />
       <div
-        className="relative overflow-hidden rounded-[44px] bg-white"
+        className={`relative overflow-hidden rounded-[44px] ${SCREEN_BG}`}
         style={{ width: device.width, height: device.height }}
       >
         {children}
@@ -82,12 +86,12 @@ function IPhoneDynamicIslandFrame({ device, children }: { device: Device; childr
 function IPhoneNotchFrame({ device, children }: { device: Device; children: ReactNode }) {
   return (
     <div
-      className="relative rounded-[52px] bg-neutral-900 p-3 shadow-xl ring-1 ring-black/30"
+      className={`relative rounded-[52px] ${CHROME_BG} p-3`}
       style={{ width: device.width + 24, height: device.height + 24 }}
     >
       <div className="absolute top-3 left-1/2 z-10 -translate-x-1/2 rounded-b-2xl bg-black" style={{ width: 180, height: 28 }} />
       <div
-        className="relative overflow-hidden rounded-[40px] bg-white"
+        className={`relative overflow-hidden rounded-[40px] ${SCREEN_BG}`}
         style={{ width: device.width, height: device.height }}
       >
         {children}
@@ -99,13 +103,13 @@ function IPhoneNotchFrame({ device, children }: { device: Device; children: Reac
 function IPhoneClassicFrame({ device, children }: { device: Device; children: ReactNode }) {
   return (
     <div
-      className="relative rounded-[44px] bg-neutral-900 px-2.5 py-12 shadow-xl ring-1 ring-black/30"
+      className={`relative rounded-[44px] ${CHROME_BG} px-2.5 py-12`}
       style={{ width: device.width + 20, height: device.height + 100 }}
     >
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 rounded-full bg-neutral-800" style={{ width: 56, height: 8 }} />
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-neutral-700 ring-1 ring-neutral-600" style={{ width: 44, height: 44 }} />
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 rounded-full bg-[#0e0e0e]" style={{ width: 56, height: 8 }} />
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-[#222] ring-1 ring-[#2a2a2a]" style={{ width: 44, height: 44 }} />
       <div
-        className="relative overflow-hidden rounded-[6px] bg-white"
+        className={`relative overflow-hidden rounded-[6px] ${SCREEN_BG}`}
         style={{ width: device.width, height: device.height }}
       >
         {children}
@@ -117,12 +121,12 @@ function IPhoneClassicFrame({ device, children }: { device: Device; children: Re
 function AndroidFrame({ device, children }: { device: Device; children: ReactNode }) {
   return (
     <div
-      className="relative rounded-[44px] bg-neutral-900 p-[9px] shadow-xl ring-1 ring-black/30"
+      className={`relative rounded-[44px] ${CHROME_BG} p-[9px]`}
       style={{ width: device.width + 18, height: device.height + 18 }}
     >
-      <div className="absolute top-4 left-1/2 z-10 h-2.5 w-2.5 -translate-x-1/2 rounded-full bg-neutral-800 ring-1 ring-neutral-700" />
+      <div className="absolute top-4 left-1/2 z-10 h-2.5 w-2.5 -translate-x-1/2 rounded-full bg-[#0e0e0e]" />
       <div
-        className="relative overflow-hidden rounded-[36px] bg-white"
+        className={`relative overflow-hidden rounded-[36px] ${SCREEN_BG}`}
         style={{ width: device.width, height: device.height }}
       >
         {children}
@@ -134,11 +138,11 @@ function AndroidFrame({ device, children }: { device: Device; children: ReactNod
 function TabletFrame({ device, children }: { device: Device; children: ReactNode }) {
   return (
     <div
-      className="relative rounded-[32px] bg-neutral-900 p-4 shadow-xl ring-1 ring-black/30"
+      className={`relative rounded-[32px] ${CHROME_BG} p-4`}
       style={{ width: device.width + 32, height: device.height + 32 }}
     >
       <div
-        className="relative overflow-hidden rounded-[16px] bg-white"
+        className={`relative overflow-hidden rounded-[16px] ${SCREEN_BG}`}
         style={{ width: device.width, height: device.height }}
       >
         {children}
@@ -150,16 +154,16 @@ function TabletFrame({ device, children }: { device: Device; children: ReactNode
 function DesktopFrame({ device, children }: { device: Device; children: ReactNode }) {
   return (
     <div
-      className="relative rounded-lg bg-neutral-200 shadow-xl ring-1 ring-black/10 dark:bg-neutral-800"
-      style={{ width: device.width + 4, height: device.height + 40 }}
+      className="relative overflow-hidden rounded-md border border-[#222] bg-[#131313]"
+      style={{ width: device.width + 4, height: device.height + 32 }}
     >
-      <div className="flex h-10 items-center gap-1.5 px-3">
-        <div className="h-3 w-3 rounded-full bg-[#ff5f57]" />
-        <div className="h-3 w-3 rounded-full bg-[#febc2e]" />
-        <div className="h-3 w-3 rounded-full bg-[#28c840]" />
+      <div className="flex h-8 items-center gap-1.5 border-b border-[#1f1f1f] px-3">
+        <div className="h-2.5 w-2.5 rounded-full bg-[#3a3a3a]" />
+        <div className="h-2.5 w-2.5 rounded-full bg-[#3a3a3a]" />
+        <div className="h-2.5 w-2.5 rounded-full bg-[#3a3a3a]" />
       </div>
       <div
-        className="relative overflow-hidden bg-white"
+        className={`relative ${SCREEN_BG}`}
         style={{ width: device.width, height: device.height, marginLeft: 2 }}
       >
         {children}

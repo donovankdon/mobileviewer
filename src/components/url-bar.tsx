@@ -11,6 +11,7 @@ interface UrlBarProps {
 export function UrlBar({ value, onSubmit }: UrlBarProps) {
   const [draft, setDraft] = useState(value ?? "");
   const [error, setError] = useState<string | null>(null);
+  const [focused, setFocused] = useState(false);
 
   useEffect(() => {
     setDraft(value ?? "");
@@ -20,7 +21,7 @@ export function UrlBar({ value, onSubmit }: UrlBarProps) {
     e.preventDefault();
     const normalized = normalizeUrl(draft);
     if (!normalized) {
-      setError("Enter a valid URL");
+      setError("That doesn't look like a URL.");
       return;
     }
     setError(null);
@@ -28,29 +29,36 @@ export function UrlBar({ value, onSubmit }: UrlBarProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full gap-2">
-      <div className="relative flex-1">
+    <form onSubmit={handleSubmit} className="relative w-full">
+      <div className="flex items-baseline gap-3 border-b border-line-strong pb-3">
+        <span className="eyebrow shrink-0">url</span>
         <input
           type="text"
           inputMode="url"
           autoComplete="off"
           autoCorrect="off"
           spellCheck={false}
-          placeholder="https://example.com"
+          placeholder="example.com"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          className="h-11 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-4 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-emerald-400 focus:outline-none"
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          className="mono flex-1 bg-transparent text-2xl tracking-tight text-fg outline-none placeholder:text-fg-dim md:text-3xl"
         />
-        {error && (
-          <div className="absolute -bottom-5 left-0 text-xs text-red-400">{error}</div>
-        )}
+        <button
+          type="submit"
+          className="mono shrink-0 text-xs uppercase tracking-widest text-fg-muted transition hover:text-fg"
+        >
+          {focused ? "press ↵" : "load →"}
+        </button>
       </div>
-      <button
-        type="submit"
-        className="h-11 rounded-lg bg-emerald-400 px-5 text-sm font-semibold text-neutral-900 hover:bg-emerald-300"
-      >
-        Preview
-      </button>
+      <div
+        aria-hidden
+        className={`absolute right-0 bottom-0 left-0 h-px origin-left bg-fg transition-transform duration-500 ${
+          focused ? "scale-x-100" : "scale-x-0"
+        }`}
+      />
+      {error && <div className="eyebrow mt-2 text-red-400">{error}</div>}
     </form>
   );
 }
