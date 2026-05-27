@@ -131,21 +131,21 @@ function RunningState() {
   );
 }
 
+const SEVERITY_RANK: Record<Severity, number> = { critical: 0, warning: 1, info: 2 };
+
 function Results({ result }: { result: AuditResult }) {
-  const grouped = new Map<string, Issue[]>();
-  for (const issue of result.issues) {
-    if (!grouped.has(issue.device_id)) grouped.set(issue.device_id, []);
-    grouped.get(issue.device_id)!.push(issue);
-  }
+  const sorted = [...result.issues].sort(
+    (a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity],
+  );
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
       <div className="border-b border-line pb-3">
         <div className="eyebrow mb-2">summary</div>
         <p className="text-xs leading-relaxed text-fg">{result.summary}</p>
       </div>
 
-      {result.issues.length === 0 && (
+      {result.issues.length === 0 ? (
         <div className="rounded border border-emerald-900/40 bg-emerald-950/20 p-3">
           <div className="mono text-[10px] tracking-widest text-emerald-400 uppercase">
             clean
@@ -154,28 +154,21 @@ function Results({ result }: { result: AuditResult }) {
             No visible issues across the audited devices.
           </div>
         </div>
-      )}
-
-      {Array.from(grouped.entries()).map(([deviceId, issues]) => {
-        const device = DEVICES_BY_ID[deviceId];
-        return (
-          <div key={deviceId} className="flex flex-col gap-2">
-            <div className="flex items-baseline justify-between border-b border-line pb-1.5">
-              <div className="text-xs text-fg">
-                {device?.name ?? deviceId}
-              </div>
-              <div className="mono text-[10px] text-fg-dim">
-                {issues.length} issue{issues.length === 1 ? "" : "s"}
-              </div>
-            </div>
-            <div className="flex flex-col gap-2">
-              {issues.map((issue, i) => (
-                <IssueRow key={i} issue={issue} />
-              ))}
+      ) : (
+        <>
+          <div className="flex items-baseline justify-between">
+            <div className="eyebrow">issues</div>
+            <div className="mono text-[10px] text-fg-dim">
+              {sorted.length} found
             </div>
           </div>
-        );
-      })}
+          <div className="flex flex-col gap-2">
+            {sorted.map((issue, i) => (
+              <IssueRow key={i} issue={issue} />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -200,7 +193,7 @@ const CATEGORY_LABEL: Record<Category, string> = {
 function IssueRow({ issue }: { issue: Issue }) {
   return (
     <div className={`rounded border p-2.5 ${SEVERITY_STYLES[issue.severity]}`}>
-      <div className="mb-1 flex items-baseline justify-between">
+      <div className="mb-1.5 flex items-baseline justify-between">
         <span className="mono text-[9px] tracking-widest uppercase">
           {issue.severity} · {CATEGORY_LABEL[issue.category]}
         </span>
@@ -210,6 +203,27 @@ function IssueRow({ issue }: { issue: Issue }) {
       <p className="mt-1.5 border-t border-line-strong/50 pt-1.5 text-[11px] leading-relaxed text-fg-muted">
         → {issue.suggestion}
       </p>
+      <DeviceBadges deviceIds={issue.device_ids} />
+    </div>
+  );
+}
+
+function DeviceBadges({ deviceIds }: { deviceIds: string[] }) {
+  if (deviceIds.length === 0) return null;
+  return (
+    <div className="mt-2 flex flex-wrap gap-1 border-t border-line-strong/50 pt-2">
+      {deviceIds.map((id) => {
+        const device = DEVICES_BY_ID[id];
+        return (
+          <span
+            key={id}
+            className="mono rounded border border-line-strong bg-bg-elevated/60 px-1.5 py-0.5 text-[9px] tracking-tight text-fg-muted"
+            title={device ? `${device.width}×${device.height}` : undefined}
+          >
+            {device?.name ?? id}
+          </span>
+        );
+      })}
     </div>
   );
 }

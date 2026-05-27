@@ -7,19 +7,20 @@ import { microlinkScreenshotUrl, normalizeUrl } from "@/lib/url";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const SYSTEM_PROMPT = `You are a senior product designer reviewing screenshots of a website rendered at multiple device viewports. Identify visual and UX issues that would harm users.
+const SYSTEM_PROMPT = `You are a senior product designer reviewing FULL-PAGE screenshots of a website rendered at multiple device viewports. Each image shows the entire scrollable page for one device (top to bottom). Identify visual and UX issues across the whole page — hero, mid-page sections, and footer.
 
-Focus on issues that are clearly visible in the screenshot:
+Focus on issues clearly visible in the screenshots:
 - Horizontal overflow / content bleeding past viewport edges
 - Text truncation, overlap, or clipped lines
 - Tap targets that look too small for fingers on mobile
-- Layout breaks between breakpoints (hero collapses, columns mismatched)
+- Layout breaks between breakpoints (hero collapses, columns mismatched, broken grids)
 - Illegible font sizes
 - Sticky/fixed elements covering content
 - Off-screen or partially clipped CTAs
 - Z-index conflicts (overlay covering everything)
 - Missing or broken images
 - Obvious color contrast problems (white text on light bg, etc.)
+- Forms or footers that break at narrow widths
 
 DO NOT report:
 - Things that look intentional or just stylistic preferences
@@ -27,7 +28,10 @@ DO NOT report:
 - Generic advice ("consider adding…", "could be better")
 - Performance, SEO, accessibility-by-DOM (no DOM access available)
 
-Be terse, specific, and confident. If the site looks fine on a device, don't invent issues. Empty issues array is a valid answer.`;
+CRITICAL — GROUPING:
+If the same issue appears on multiple devices (e.g., the same logo overflows on both phones AND the tablet), report it ONCE with all affected devices listed in device_ids. Do NOT create a separate entry per device for the same issue. Only split into separate entries when the issue is meaningfully different per device (different element, different cause, or only appears at one breakpoint).
+
+Be terse, specific, and confident. If the site looks fine across all devices, return an empty issues array — that's a valid answer.`;
 
 interface AuditRequest {
   url: string;
@@ -73,11 +77,13 @@ export async function POST(request: Request) {
   try {
     screenshots = await Promise.all(
       devices.map(async (d) => {
-        const shotUrl = microlinkScreenshotUrl(normalizedUrl, {
-          width: d.width,
-          height: d.height,
-        });
-        const r = await fetch(shotUrl, { signal: AbortSignal.timeout(30000) });
+        const shotUrl = microlinkScreenshotUrl(
+          normalizedUrl,
+          { width: d.width, height: d.height },
+          // Full-page capture, DPR=1 to keep file size under Anthropic's 5MB/image cap.
+          { fullPage: true, deviceScaleFactor: 1 },
+        );
+        const r = await fetch(shotUrl, { signal: AbortSignal.timeout(45000) });
         if (!r.ok) throw new Error(`Screenshot ${d.id} returned ${r.status}`);
         const mediaType = r.headers.get("content-type") ?? "image/jpeg";
         const buffer = Buffer.from(await r.arrayBuffer());

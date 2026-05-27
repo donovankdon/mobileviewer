@@ -13,10 +13,17 @@ export const CATEGORIES = [
 ] as const;
 
 export const IssueSchema = z.object({
-  device_id: z.string(),
+  device_ids: z
+    .array(z.string())
+    .min(1)
+    .describe(
+      "All device ids where this issue appears. If the same issue affects multiple devices, list them all here — do NOT split the same issue into multiple entries.",
+    ),
   severity: z.enum(SEVERITIES),
   category: z.enum(CATEGORIES),
-  area: z.string().describe("Page area: header / hero / content / nav / footer / etc."),
+  area: z
+    .string()
+    .describe("Page area: header / hero / content / nav / footer / pricing / etc."),
   description: z.string().describe("What's wrong, in one concise sentence."),
   suggestion: z.string().describe("A concrete fix in one sentence."),
 });
