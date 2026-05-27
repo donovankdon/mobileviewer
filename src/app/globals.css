@@ -23,42 +23,24 @@
   --font-mono: var(--font-geist-mono);
 }
 
-html {
-  scroll-behavior: smooth;
-  background: var(--bg);
-}
-
+html,
 body {
   background: var(--bg);
   color: var(--fg);
+}
+
+body {
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   font-weight: 300;
-  font-feature-settings: "ss01", "cv11";
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
-/* Hide native cursor on devices with a fine pointer so our custom one is the only one. */
-@media (pointer: fine) {
-  body.has-custom-cursor,
-  body.has-custom-cursor * {
-    cursor: none !important;
-  }
-}
-
-/* Mono numeric utility */
 .mono {
   font-family: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
-  font-feature-settings: "ss02", "cv01", "tnum";
+  font-feature-settings: "tnum";
 }
 
-/* Display tracking */
-.display {
-  letter-spacing: -0.04em;
-  font-weight: 600;
-}
-
-/* Tiny meta label */
 .eyebrow {
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 10px;
@@ -67,24 +49,22 @@ body {
   color: var(--fg-dim);
 }
 
-/* Subtle text-reveal animation utility (used inline) */
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(0.4em);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.rise {
-  animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-/* Selection */
 ::selection {
   background: var(--fg);
   color: var(--bg);
+}
+
+/* Custom scrollbar for sidebar */
+.scroll-thin::-webkit-scrollbar {
+  width: 6px;
+}
+.scroll-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 3px;
+}
+.scroll-thin::-webkit-scrollbar-thumb:hover {
+  background: var(--fg-dim);
 }

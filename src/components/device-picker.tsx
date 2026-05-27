@@ -1,8 +1,7 @@
 "use client";
 
-import { DEVICES, type DeviceCategory } from "@/lib/devices";
+import { DEVICES, type Device, type DeviceCategory } from "@/lib/devices";
 import { useMemo, useState } from "react";
-import { Magnetic } from "./magnetic";
 
 interface DevicePickerProps {
   selected: string[];
@@ -11,10 +10,18 @@ interface DevicePickerProps {
 
 const CATEGORIES: { value: DeviceCategory | "all"; label: string }[] = [
   { value: "all", label: "all" },
-  { value: "phone", label: "phones" },
-  { value: "tablet", label: "tablets" },
-  { value: "desktop", label: "desktop" },
+  { value: "phone", label: "phone" },
+  { value: "tablet", label: "tab" },
+  { value: "desktop", label: "desk" },
 ];
+
+const BRAND_ORDER: Device["brand"][] = ["apple", "google", "samsung", "other"];
+const BRAND_LABEL: Record<Device["brand"], string> = {
+  apple: "apple",
+  google: "google",
+  samsung: "samsung",
+  other: "other",
+};
 
 export function DevicePicker({ selected, onChange }: DevicePickerProps) {
   const [filter, setFilter] = useState<DeviceCategory | "all">("all");
@@ -27,75 +34,98 @@ export function DevicePicker({ selected, onChange }: DevicePickerProps) {
     return byCategory.filter((d) => d.name.toLowerCase().includes(q) || d.brand.includes(q));
   }, [filter, search]);
 
+  const grouped = useMemo(() => {
+    const map = new Map<Device["brand"], Device[]>();
+    for (const d of visible) {
+      if (!map.has(d.brand)) map.set(d.brand, []);
+      map.get(d.brand)!.push(d);
+    }
+    return BRAND_ORDER.filter((b) => map.has(b)).map((b) => [b, map.get(b)!] as const);
+  }, [visible]);
+
   const toggle = (id: string) => {
     onChange(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-line pb-3">
-        <div className="flex items-baseline gap-3">
-          <span className="eyebrow">filter</span>
-          {CATEGORIES.map((c) => (
-            <button
-              key={c.value}
-              type="button"
-              onClick={() => setFilter(c.value)}
-              className={`mono text-xs tracking-tight transition ${
-                filter === c.value ? "text-fg" : "text-fg-muted hover:text-fg"
-              }`}
-            >
-              {c.label}
-            </button>
-          ))}
-        </div>
-        <div className="ml-auto flex items-baseline gap-3">
-          <span className="eyebrow">search</span>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="iphone, pixel…"
-            className="mono w-40 bg-transparent text-xs text-fg outline-none placeholder:text-fg-dim"
-          />
-          {selected.length > 0 && (
-            <button
-              type="button"
-              onClick={() => onChange([])}
-              className="mono text-xs text-fg-muted hover:text-fg"
-            >
-              clear({selected.length})
-            </button>
-          )}
-        </div>
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <label className="eyebrow">devices</label>
+        {selected.length > 0 && (
+          <button
+            type="button"
+            onClick={() => onChange([])}
+            className="mono text-[10px] text-fg-dim hover:text-fg"
+          >
+            clear ({selected.length})
+          </button>
+        )}
       </div>
 
-      <div className="flex flex-wrap gap-x-5 gap-y-3">
-        {visible.map((d) => {
-          const isSelected = selected.includes(d.id);
-          return (
-            <Magnetic key={d.id} strength={0.2}>
-              <button
-                type="button"
-                onClick={() => toggle(d.id)}
-                className={`group flex items-baseline gap-2 transition ${
-                  isSelected ? "text-fg" : "text-fg-muted hover:text-fg"
-                }`}
-              >
-                <span
-                  className={`h-1 w-1 rounded-full transition ${
-                    isSelected ? "bg-fg" : "bg-fg-dim group-hover:bg-fg-muted"
+      <input
+        type="text"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="search"
+        className="mono w-full rounded border border-line-strong bg-bg-elevated px-2.5 py-1.5 text-[11px] text-fg placeholder:text-fg-dim focus:border-fg-muted focus:outline-none"
+      />
+
+      <div className="flex gap-1">
+        {CATEGORIES.map((c) => (
+          <button
+            key={c.value}
+            type="button"
+            onClick={() => setFilter(c.value)}
+            className={`mono flex-1 rounded border px-1 py-1 text-[10px] transition ${
+              filter === c.value
+                ? "border-fg-muted bg-bg-elevated text-fg"
+                : "border-line text-fg-dim hover:border-line-strong hover:text-fg-muted"
+            }`}
+          >
+            {c.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="scroll-thin -mr-2 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-2">
+        {grouped.map(([brand, devices]) => (
+          <div key={brand} className="flex flex-col gap-0.5">
+            <div className="mono mb-1 text-[9px] tracking-widest text-fg-dim uppercase">
+              {BRAND_LABEL[brand]}
+            </div>
+            {devices.map((d) => {
+              const isSelected = selected.includes(d.id);
+              return (
+                <button
+                  key={d.id}
+                  type="button"
+                  onClick={() => toggle(d.id)}
+                  className={`flex items-center justify-between rounded px-2 py-1 text-left text-xs transition ${
+                    isSelected
+                      ? "bg-bg-elevated text-fg"
+                      : "text-fg-muted hover:bg-bg-elevated/50 hover:text-fg"
                   }`}
-                />
-                <span className="text-sm tracking-tight">{d.name}</span>
-                <span className="mono text-[10px] text-fg-dim">
-                  {d.width}×{d.height}
-                </span>
-              </button>
-            </Magnetic>
-          );
-        })}
-        {visible.length === 0 && <span className="mono text-xs text-fg-dim">no matches</span>}
+                >
+                  <span className="flex items-center gap-2">
+                    <span
+                      aria-hidden
+                      className={`h-1.5 w-1.5 rounded-full transition ${
+                        isSelected ? "bg-fg" : "bg-fg-dim"
+                      }`}
+                    />
+                    <span className="truncate">{d.name}</span>
+                  </span>
+                  <span className="mono shrink-0 text-[9px] text-fg-dim">
+                    {d.width}×{d.height}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        ))}
+        {grouped.length === 0 && (
+          <div className="mono py-4 text-center text-[10px] text-fg-dim">no matches</div>
+        )}
       </div>
     </div>
   );

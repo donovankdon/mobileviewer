@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "motion/react";
 import { DeviceFrame } from "./device-frame";
 import type { Device } from "@/lib/devices";
 import { microlinkScreenshotUrl } from "@/lib/url";
@@ -10,7 +9,6 @@ interface DevicePreviewProps {
   device: Device;
   url: string | null;
   scale: number;
-  index?: number;
 }
 
 type CheckState =
@@ -20,7 +18,7 @@ type CheckState =
   | { kind: "screenshot"; reason?: string }
   | { kind: "error"; reason: string };
 
-export function DevicePreview({ device, url, scale, index = 0 }: DevicePreviewProps) {
+export function DevicePreview({ device, url, scale }: DevicePreviewProps) {
   const [state, setState] = useState<CheckState>({ kind: "idle" });
 
   useEffect(() => {
@@ -47,23 +45,18 @@ export function DevicePreview({ device, url, scale, index = 0 }: DevicePreviewPr
   }, [url]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.05 + index * 0.06 }}
-      className="flex flex-col items-center gap-4"
-    >
+    <div className="flex flex-col items-center gap-3">
       <DeviceFrame device={device} scale={scale}>
         <PreviewContent device={device} url={url} state={state} />
       </DeviceFrame>
       <div className="text-center">
-        <div className="text-sm tracking-tight text-fg">{device.name}</div>
+        <div className="text-xs tracking-tight text-fg">{device.name}</div>
         <div className="mono mt-0.5 text-[10px] text-fg-dim">
           {device.width} × {device.height}
           {state.kind === "screenshot" && <span className="ml-2">· static</span>}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -119,13 +112,9 @@ function EmptyState() {
 function CheckingState() {
   return (
     <div className="flex h-full w-full items-center justify-center bg-white">
-      <motion.div
-        animate={{ opacity: [0.2, 1, 0.2] }}
-        transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
-        className="mono text-[10px] tracking-widest text-neutral-400 uppercase"
-      >
+      <div className="mono animate-pulse text-[10px] tracking-widest text-neutral-400 uppercase">
         loading
-      </motion.div>
+      </div>
     </div>
   );
 }

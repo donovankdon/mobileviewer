@@ -11,7 +11,6 @@ interface UrlBarProps {
 export function UrlBar({ value, onSubmit }: UrlBarProps) {
   const [draft, setDraft] = useState(value ?? "");
   const [error, setError] = useState<string | null>(null);
-  const [focused, setFocused] = useState(false);
 
   useEffect(() => {
     setDraft(value ?? "");
@@ -21,7 +20,7 @@ export function UrlBar({ value, onSubmit }: UrlBarProps) {
     e.preventDefault();
     const normalized = normalizeUrl(draft);
     if (!normalized) {
-      setError("That doesn't look like a URL.");
+      setError("Not a valid URL");
       return;
     }
     setError(null);
@@ -29,36 +28,20 @@ export function UrlBar({ value, onSubmit }: UrlBarProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="relative w-full">
-      <div className="flex items-baseline gap-3 border-b border-line-strong pb-3">
-        <span className="eyebrow shrink-0">url</span>
-        <input
-          type="text"
-          inputMode="url"
-          autoComplete="off"
-          autoCorrect="off"
-          spellCheck={false}
-          placeholder="example.com"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          className="mono flex-1 bg-transparent text-2xl tracking-tight text-fg outline-none placeholder:text-fg-dim md:text-3xl"
-        />
-        <button
-          type="submit"
-          className="mono shrink-0 text-xs uppercase tracking-widest text-fg-muted transition hover:text-fg"
-        >
-          {focused ? "press ↵" : "load →"}
-        </button>
-      </div>
-      <div
-        aria-hidden
-        className={`absolute right-0 bottom-0 left-0 h-px origin-left bg-fg transition-transform duration-500 ${
-          focused ? "scale-x-100" : "scale-x-0"
-        }`}
+    <form onSubmit={handleSubmit} className="flex flex-col gap-1">
+      <label className="eyebrow">url</label>
+      <input
+        type="text"
+        inputMode="url"
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
+        placeholder="example.com"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        className="mono w-full rounded border border-line-strong bg-bg-elevated px-2.5 py-2 text-xs text-fg placeholder:text-fg-dim focus:border-fg-muted focus:outline-none"
       />
-      {error && <div className="eyebrow mt-2 text-red-400">{error}</div>}
+      {error && <span className="mono text-[10px] text-red-400">{error}</span>}
     </form>
   );
 }
